@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizzería Copilco (Pequeño César)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1f1c2c, #928dab);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            width: 600px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            margin-top: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 12px;
+            background-color: #4a00e0;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #2c00a3;
+        }
+
+        .ticket {
+            margin-top: 30px;
+            background: #f4f4f4;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .pizza-item {
+            margin-bottom: 10px;
+        }
+
+        .discount {
+            color: green;
+            font-weight: bold;
+        }
+
+        .total {
+            font-weight: bold;
+            font-size: 20px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🍕 Pequeño sizar</h1>
+
+    <div class="form-group">
+        <label>Tamaño (radio):</label>
+        <input type="number" id="size" step="0.1" required>
+    </div>
+
+    <div class="form-group">
+        <label>Cantidad de toppings:</label>
+        <input type="number" id="toppings" required>
+    </div>
+
+    <button onclick="addPizza()">Agregar Pizza</button>
+    <button onclick="generateTicket()">Generar Ticket</button>
+    <button onclick="toggleMusic()"> Activar / Pausar Música</button>
+
+    <div class="ticket" id="ticket"></div>
+</div>
+
+<!-- AUDIO -->
+<audio id="bgMusic" loop>
+    <source src="audio.mp4" type="audio/mp4" />
+</audio>
+
+<script>
+
+class Pizza {
+    constructor(tamano, toppings) {
+        this.tamano = tamano;
+        this.toppings = toppings;
+        this.precio = this.calcularPrecio();
+    }
+
+    calcularPrecio() {
+        const basePrice = 100;
+        const toppingPrice = 20;
+        return basePrice + (toppingPrice * this.toppings);
+    }
+}
+
+let pizzas = [];
+const audio = document.getElementById("bgMusic");
+
+function toggleMusic() {
+    if (audio.paused) {
+        audio.play();
+    } else {
+        audio.pause();
+    }
+}
+
+function addPizza() {
+    const size = parseFloat(document.getElementById("size").value);
+    const toppings = parseInt(document.getElementById("toppings").value);
+
+    if (isNaN(size) || isNaN(toppings) || size <= 0 || toppings < 0) {
+        alert("Por favor ingresa valores válidos.");
+        return;
+    }
+
+    const pizza = new Pizza(size, toppings);
+    pizzas.push(pizza);
+
+    document.getElementById("size").value = "";
+    document.getElementById("toppings").value = "";
+}
+
+function generateTicket() {
+    let totalPrice = 0;
+    let discount = 0;
+    let groupedBySize = {};
+
+    pizzas.forEach(pizza => {
+        totalPrice += pizza.precio;
+        if (!groupedBySize[pizza.tamano]) {
+            groupedBySize[pizza.tamano] = [];
+        }
+        groupedBySize[pizza.tamano].push(pizza);
+    });
+
+    for (let size in groupedBySize) {
+        let group = groupedBySize[size];
+        group.sort((a, b) => a.precio - b.precio);
+
+        for (let i = 0; i < group.length - 1; i += 2) {
+            discount += group[i].precio;
+        }
+    }
+
+    const finalTotal = totalPrice - discount;
+
+    const ticketDiv = document.getElementById("ticket");
+    ticketDiv.innerHTML = "<h3>--- Ticket de Orden ---</h3>";
+
+    pizzas.forEach((pizza, index) => {
+        ticketDiv.innerHTML += `
+            <div class="pizza-item">
+                Pizza ${index + 1}: Tamaño ${pizza.tamano}, 
+                Toppings ${pizza.toppings}, 
+                Precio $${pizza.precio}
+            </div>
+        `;
+    });
+
+    if (discount > 0) {
+        ticketDiv.innerHTML += `<div class="discount">Descuento 2x1 aplicado: -$${discount}</div>`;
+    }
+
+    ticketDiv.innerHTML += `<div class="total">Total Final: $${finalTotal}</div>`;
+}
+
+</script>
+
+</body>
+</html>
